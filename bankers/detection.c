@@ -1,121 +1,140 @@
 #include <stdio.h>
 #include <stdbool.h>
+#include <stdlib.h>
 
 int main()
 {
-    int n, r;
-    printf("Enter number of processes: ");
-    scanf("%d", &n);
-    printf("Enter number of resource types: ");
+    int p, r;
+    printf("Enter no.of process : \t");
+    scanf("%d", &p);
+    printf("Enter no.of resource types : \t");
     scanf("%d", &r);
 
-    int allocation[n][r], maximum[n][r], need[n][r], available[r];
-
-    // Input Allocation Matrix
-    printf("\nEnter Allocation Matrix (each row for a process):\n");
-    for (int i = 0; i < n; i++)
+    int allocated[p][r], max[p][r], need[p][r], resource[r];
+    for (int i = 0; i < p; i++)
     {
-        printf("Process P%d: ", i);
         for (int j = 0; j < r; j++)
         {
-            scanf("%d", &allocation[i][j]);
+            printf("Enter the resources need for process-%d with resource type - %d \t:", i + 1, j + 1);
+            scanf("%d", &allocated[i][j]);
         }
     }
-
-    // Input Maximum Matrix
-    printf("\nEnter Maximum Matrix (each row for a process):\n");
-    for (int i = 0; i < n; i++)
+    for (int i = 0; i < p; i++)
     {
-        printf("Process P%d: ", i);
         for (int j = 0; j < r; j++)
         {
-            scanf("%d", &maximum[i][j]);
+            printf("Enter the total resources needed for process-%d with resource type - %d \t:", i + 1, j + 1);
+            scanf("%d", &max[i][j]);
         }
     }
-
-    // Input Available Resources
-    printf("\nEnter Available Resources:\n");
     for (int j = 0; j < r; j++)
     {
-        scanf("%d", &available[j]);
+        printf("Enter the total resources resource type - %d \t:", j + 1);
+        scanf("%d", &resource[j]);
     }
 
-    // Calculate Need Matrix = Maximum - Allocation
-    for (int i = 0; i < n; i++)
+    for (int i = 0; i < p; i++)
     {
         for (int j = 0; j < r; j++)
         {
-            need[i][j] = maximum[i][j] - allocation[i][j];
+            need[i][j] = max[i][j] - allocated[i][j];
         }
     }
-
-    // Banker's Algorithm: Finding a Safe Sequence
-    bool finish[n];
-    for (int i = 0; i < n; i++)
+    printf("Printing ....\n");
+    printf("Allocation : \n");
+    for (int i = 0; i < p; i++)
     {
-        finish[i] = false;
+        for (int j = 0; j < r; j++)
+        {
+            printf("%d  ", allocated[i][j]);
+        }
+        printf("\n");
+    }
+    printf("Max : \n");
+    for (int i = 0; i < p; i++)
+    {
+        for (int j = 0; j < r; j++)
+        {
+            printf("%d  ", max[i][j]);
+        }
+        printf("\n");
+    }
+    printf("Need : \n");
+    for (int i = 0; i < p; i++)
+    {
+        for (int j = 0; j < r; j++)
+        {
+            printf("%d  ", need[i][j]);
+        }
+        printf("\n");
     }
 
-    int safeSeq[n]; // To store safe sequence
     int count = 0;
+    int sequence[p];
+    bool finished[p];
+    for (int i = 0; i < p; i++)
+    {
+        finished[i] = false;
+    }
 
-    // Work vector holds available resources at each step
     int work[r];
     for (int j = 0; j < r; j++)
     {
-        work[j] = available[j];
+        work[j] = resource[j];
     }
 
-    while (count < n)
+    while (count < p)
     {
-        bool found = false;
-        // Try to find an unfinished process whose needs can be met by current work
-        for (int i = 0; i < n; i++)
+        int process = -1;
+        for (int i = 0; i < p; i++)
         {
-            if (!finish[i])
+            if (finished[i] == true)
             {
-                bool canAllocate = true;
+                continue;
+            }
+            bool canAllocate = true;
+            for (int j = 0; j < r; j++)
+            {
+                if (need[i][j] > work[j])
+                {
+                    canAllocate = false;
+                    break;
+                }
+            }
+            if (canAllocate)
+            {
+                process = i;
+                sequence[count] = i;
+                finished[i] = true;
+                count++;
+                printf("Process %d completed \n", i + 1);
                 for (int j = 0; j < r; j++)
                 {
-                    if (need[i][j] > work[j])
-                    {
-                        canAllocate = false;
-                        break;
-                    }
+                    work[j] += allocated[i][j];
                 }
-                if (canAllocate)
+                printf("The work is  \t");
+                for (int j = 0; j < r; j++)
                 {
-                    // If process can be allocated resources, simulate its execution
-                    for (int j = 0; j < r; j++)
-                    {
-                        work[j] += allocation[i][j];
-                    }
-                    safeSeq[count++] = i;
-                    finish[i] = true;
-                    found = true;
+                    printf("%d ", work[j]);
                 }
             }
         }
-        // If no process was found in this loop, system is not in a safe state.
-        if (!found)
+        if (process == -1)
         {
             break;
         }
     }
-
-    // Print result
-    if (count == n)
+    if (count != p)
     {
-        printf("\nSystem is in a safe state.\nSafe sequence is: ");
-        for (int i = 0; i < n; i++)
-        {
-            printf("P%d ", safeSeq[i]);
-        }
-        printf("\n");
+        printf("Couldnt find safe sequence exiting : \n");
     }
     else
     {
-        printf("\nSystem is NOT in a safe state. Deadlock may occur.\n");
+        printf("seq is : \n");
+        for (int i = 0; i < p; i++)
+        {
+            printf("%d -> ", sequence[i]);
+        }
     }
 
     return 0;
